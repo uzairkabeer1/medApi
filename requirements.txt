@@ -1,5 +1,5 @@
-fastapi
-joblib
+Flask
+Flask_SQLAlchemy
 pydantic
 scikit-learn
-uvicorn[standard]
+SQLAlchemy

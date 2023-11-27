@@ -1,53 +1,53 @@
-# To run the server:
-# uvicorn api:app --reload
-
-from fastapi import FastAPI, HTTPException
-import sqlite3
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 import joblib
 from pydantic import BaseModel
 
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medicine_data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-class PredictionRequest(BaseModel):
-    text: str
-
-
-app = FastAPI()
-
-
-def top_drugs_extractor(condition):
-    db_file = 'medicine_data.db'
-    query = """
-    SELECT drugName
-    FROM medicine_data
-    WHERE rating >= 9 AND usefulCount >= 100 AND condition = ?
-    ORDER BY rating DESC, usefulCount DESC
-    LIMIT 3;
-    """
-
-    conn = sqlite3.connect(db_file)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(query, (condition,))
-        results = cursor.fetchall()
-        return [result[0] for result in results]
-    except sqlite3.Error as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
-
+class MedicineData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    drugName = db.Column(db.String)
+    condition = db.Column(db.String)
+    rating = db.Column(db.Float)
+    usefulCount = db.Column(db.Integer)
 
 vectorizer = joblib.load('tfidfvectorizer_11c.pkl')
 model = joblib.load('passmodel_11c.pkl')
 
+class PredictionRequest(BaseModel):
+    text: str
 
-@app.get("/top-drugs/{condition}")
-async def top_drugs(condition: str):
-    return top_drugs_extractor(condition)
+@app.route('/top-drugs/<condition>', methods=['GET'])
+def top_drugs(condition):
+    results = MedicineData.query.filter(MedicineData.rating >= 9,
+                                        MedicineData.usefulCount >= 100,
+                                        MedicineData.condition == condition)\
+                                .order_by(MedicineData.rating.desc(),
+                                          MedicineData.usefulCount.desc())\
+                                .limit(3)\
+                                .all()
+    if not results:
+        return jsonify({'error': 'No data found'}), 404
 
+    return jsonify([result.drugName for result in results])
 
-@app.post("/predict")
-async def predict(request: PredictionRequest):
-    test_vector = vectorizer.transform([request.text])
-    prediction = model.predict(test_vector)
-    return {"prediction": prediction[0]}
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json()
+    if not data or 'text' not in data:
+        return jsonify({'error': 'No text provided'}), 400
 
+    try:
+        request_obj = PredictionRequest(text=data['text'])
+        test_vector = vectorizer.transform([request_obj.text])
+        prediction = model.predict(test_vector)
+        return jsonify({'prediction': prediction[0]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
