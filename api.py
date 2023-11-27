@@ -1,5 +1,5 @@
 # To run the server:
-# uvicorn your_script_name:app --reload
+# uvicorn api:app --reload
 
 from fastapi import FastAPI, HTTPException
 import sqlite3

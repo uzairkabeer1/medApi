@@ -2,5 +2,4 @@ fastapi
 joblib
 pydantic
 scikit-learn
-scipy
 uvicorn[standard]
