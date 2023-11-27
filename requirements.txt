@@ -2,4 +2,5 @@ Flask
 Flask_SQLAlchemy
 pydantic
 scikit-learn
+scipy
 SQLAlchemy
