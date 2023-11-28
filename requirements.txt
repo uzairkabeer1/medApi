@@ -1,6 +1,5 @@
 Flask
-scipy
 pydantic
-scikit-learn
+scikit-learn==1.2.1
 pandas
 numpy
