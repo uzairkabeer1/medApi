@@ -3,3 +3,4 @@ pydantic
 scikit-learn==1.2.1
 pandas
 numpy
+gunicorn
