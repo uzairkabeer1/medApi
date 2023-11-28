@@ -1,6 +1,6 @@
 Flask
 scipy
-Flask_SQLAlchemy
 pydantic
 scikit-learn
-SQLAlchemy
+pandas
+numpy

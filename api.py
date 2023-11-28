@@ -1,35 +1,30 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import joblib
+import pandas as pd
+import numpy as np
 from pydantic import BaseModel
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medicine_data.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-class MedicineData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    drugName = db.Column(db.String)
-    condition = db.Column(db.String)
-    rating = db.Column(db.Float)
-    usefulCount = db.Column(db.Integer)
 
 vectorizer = joblib.load('tfidfvectorizer_11c.pkl')
 model = joblib.load('passmodel_11c.pkl')
+data = pd.read_table('')
 
 class PredictionRequest(BaseModel):
     text: str
 
+def top_drugs_extractor(condition):
+    df_top = data[(data['rating']>=9)&(data['usefulCount']>=100)].sort_values(by = ['rating', 'usefulCount'], ascending = [False, False])
+    drug_lst = df_top[df_top['condition']==condition]['drugName'].head(3).tolist()
+    return drug_lst
+
 @app.route('/top-drugs/<condition>', methods=['GET'])
 def top_drugs(condition):
-    results = MedicineData.query.filter(MedicineData.rating >= 9,
-                                        MedicineData.usefulCount >= 100,
-                                        MedicineData.condition == condition)\
-                                .order_by(MedicineData.rating.desc(),
-                                          MedicineData.usefulCount.desc())\
-                                .limit(3)\
-                                .all()
+    df_top = data[(data['rating']>=9)&(data['usefulCount']>=100)].sort_values(by = ['rating', 'usefulCount'], ascending = [False, False])
+    results = df_top[df_top['condition']==condition]['drugName'].head(3).tolist()
+    
     if not results:
         return jsonify({'error': 'No data found'}), 404
 
