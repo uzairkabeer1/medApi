@@ -27,7 +27,7 @@ def top_drugs(condition):
     if not results:
         return jsonify({'error': 'No data found'}), 404
 
-    return jsonify([result.drugName for result in results])
+    return jsonify(results)
 
 @app.route('/predict', methods=['POST'])
 def predict():
