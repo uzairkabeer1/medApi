@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 vectorizer = joblib.load('tfidfvectorizer_11c.pkl')
 model = joblib.load('passmodel_11c.pkl')
-data = pd.read_table('')
+data = pd.read_table('drugsComTrain_raw.tsv')
 
 class PredictionRequest(BaseModel):
     text: str
